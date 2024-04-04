@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}">
+    <title>AWS SQS CRUD</title>
+</head>
+<body>
+    <h1>AWS SQS CRUD Operations</h1>
+    <div>
+        <input type="text" id="messageInput" placeholder="Enter Message">
+        <button onclick="createMessage()">Create Message</button>
+    </div>
+    <div id="messagesList">
+        <h2>Messages</h2>
+        <ul id="messages"></ul>
+    </div>
+
+    <div id="successMessage" style="display: none; color: green;">Message Sent Successfully!</div>
+
+    <script>
+        function createMessage() {
+            var message = document.getElementById('messageInput').value;
+            fetch('/create_message', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ message: message })
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to create message');
+                }
+                document.getElementById('successMessage').style.display = 'block';
+                setTimeout(() => {
+                    document.getElementById('successMessage').style.display = 'none';
+                }, 3000); // Hide the success message after 3 seconds
+                return response.json();
+            })
+            .then(data => {
+                console.log(data);
+                fetchMessages();
+            })
+            .catch(error => console.error('Error creating message:', error));
+        }
+
+        function fetchMessages() {
+            fetch('/read_messages')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to fetch messages');
+                }
+                return response.json();
+            })
+            .then(messages => {
+                console.log(messages);
+                var messagesList = document.getElementById('messages');
+                messagesList.innerHTML = ''; // Clear existing messages
+                messages.forEach(msg => {
+                    var listItem = document.createElement('li');
+                    listItem.textContent = msg.Body;
+                    messagesList.appendChild(listItem);
+                });
+            })
+            .catch(error => console.error('Error fetching messages:', error));
+        }
+
+        // Load messages when the page loads
+        document.addEventListener('DOMContentLoaded', fetchMessages);
+    </script>
+</body>
+</html>
